@@ -44,7 +44,7 @@ for dbname in $databases; do
 	# strip off the quotes and comma from the string
 	token=${token:2:substr}
 
-	aws logs put-log-events --log-group-name aws_rds_postgres --log-stream-name mydbinstance --log-events "timestamp=$(echo $(date +%s%N | cut -b1-13)),message='$dbname was backed up ($filesizekb KiB)'" --region us-east-1 --sequence-token $token
+	aws logs put-log-events --log-group-name aws_rds_postgres --log-stream-name mydbinstance --log-events "timestamp=$(echo $(date +%s%N | cut -b1-13)),message='$dbname was backed up ($filesizekb KiB)'" --region us-east-1 --sequence-token $token > /dev/null
 	echo " done."
 
 done
