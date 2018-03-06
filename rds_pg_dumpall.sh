@@ -30,6 +30,23 @@ for dbname in $databases; do
 	filesizemb=$(expr $filesize / 1024 / 1024)
 	filesizekb=$(expr $filesize / 1024)
 	echo "done ($targetfilename, $filesizekb KiB)"
+
+	# now, cleanup the local backup files
+	echo -n "Cleaning up $targetfilename..."
+	rm /home/ec2-user/backups/$targetfilename
+	
+	# log it
+	# get the next sequence token
+	token=$(aws logs describe-log-streams --log-group-name aws_rds_postgres --region us-east-1 |grep uploadSequenceToken |awk -F ":" '{print $2}')
+	len=${#token}
+	substr=$(expr $len - 5)
+
+	# strip off the quotes and comma from the string
+	token=${token:2:substr}
+
+	aws logs put-log-events --log-group-name aws_rds_postgres --log-stream-name mydbinstance --log-events "timestamp=$(echo $(date +%s%N | cut -b1-13)),message='$dbname was backed up ($filesizekb KiB)'" --region us-east-1 --sequence-token $token
+	echo " done."
+
 done
 
 
