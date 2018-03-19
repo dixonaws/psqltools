@@ -4,9 +4,13 @@ rds_host="mydbinstance.c15lzdctuff2.us-east-1.rds.amazonaws.com"
 rds_port="5432"
 log_group_name="aws_rds_postgres"
 log_stream_name="mydbinstance"
+region="us-east-1"
+db_username="master"
 
 # query the RDS instance for a list of databases
-databases=$(psql postgresql://mydbinstance.c15lzdctuff2.us-east-1.rds.amazonaws.com:5432/db0 --username=master --command="SELECT datname FROM pg_database WHERE datistemplate=false;" --no-align --tuples-only)
+db_password=`aws ssm get-parameter --with-decryption --name mydbinstance.c15lzdctuff2.us-east-1.rds.amazonaws.com_db0 --region $region |jq -r '.Parameter.Value'`
+
+databases=$(psql --dbname="postgresql://$db_username:$db_password@$rds_host:$rds_port/postgres" --command="SELECT datname FROM pg_database WHERE datistemplate=false;" --no-align --tuples-only)
 
 # iterate through the list of datbases and back up each one with pg_dump
 for dbname in $databases; do
@@ -23,8 +27,11 @@ for dbname in $databases; do
 
 	targetfilename=$dbname-$datetimestring-psql.tar
 
+	# get the database password from the AWS Systems Manager paerameter store (your IAM user must have permissions to do this)
+	db_password=`aws ssm get-parameter --with-decryption --name "$rds_host"_"$dbname" --region $region |jq -r '.Parameter.Value'`
+
 	# stream the backup of each database directly to S3
-	pg_dump --host $rds_host --port $rds_port --username master --dbname=$dbname --no-password --format=tar | aws s3 cp - s3://dbtools-backups/$targetfilename --quiet
+	pg_dump --dbname="postgresql://$db_username:$db_password@$rds_host:$rds_port/$dbname" --format=tar | aws s3 cp - s3://dbtools-backups/$targetfilename --quiet
 
 	# get the filesize in S3
 	filesize=$(aws s3 ls s3://dbtools-backups/$targetfilename |awk '{print $3}')
