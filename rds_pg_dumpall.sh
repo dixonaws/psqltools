@@ -17,10 +17,10 @@ for dbname in $databases; do
 	fi
 
 	targetfilename=$dbname-$datetimestring.psql
-	pg_dump --host mydbinstance.c15lzdctuff2.us-east-1.rds.amazonaws.com --port 5432 --username master --dbname=$dbname --no-password > /home/ec2-user/backups/$targetfilename
+	pg_dump --host mydbinstance.c15lzdctuff2.us-east-1.rds.amazonaws.com --port 5432 --username master --dbname=$dbname --no-password > $targetfilename
 
 	# copy to S3 dbtools-backups bucket
-	aws s3 cp /home/ec2-user/backups/$targetfilename s3://dbtools-backups
+	aws s3 cp $targetfilename s3://dbtools-backups
 
 	# get the filesize on the local filesystem
 	# filesize=$(ls -lah /home/ec2-user/backups/$targetfilename |awk '{print $5}')
@@ -33,7 +33,7 @@ for dbname in $databases; do
 
 	# now, cleanup the local backup files
 	echo -n "Cleaning up $targetfilename..."
-	rm /home/ec2-user/backups/$targetfilename
+	rm $targetfilename
 	
 	# log it
 	# get the next sequence token
