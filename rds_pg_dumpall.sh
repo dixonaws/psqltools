@@ -92,13 +92,14 @@ usage() {
 	echo "-b		the S3 bucket to store backups"
 	echo "-g		the log group name"
 	echo "-s		the stream name"
+	echo "-e		the region name, e.g., us-east-1"
 	echo ""
 	echo "Optional arguments:"
 	echo "-u		the username to use for each database on the instance(s), defaults to master"
 	echo "-p		the port to use for the connection(s), defaults to 5432"
 	echo ""
 	echo "Example:"
-	echo "rds_dumpall.sh -u master -p 5432 -r instance0,instance1,instancen -s dbtools"
+	echo "rds_dumpall.sh -u master -p 5432 -r instance0,instance1,instancen -s dbtools -e us-east-1 -s mylogstream -g myloggroup"
 	echo ""
 	echo "See https://github.com/dixonaws/psqltools for source and more information"
 
@@ -145,7 +146,7 @@ while getopts ":hr:u:p:b:s:g:e:" opt; do
 			echo "- using region:  $region"
 			;;
 		: )
-			echo "Invalid option: -$OPTARG" 
+			echo "-$OPTARG requires an argument" 
 			echo ""
 			usage
 			exit 1
@@ -158,6 +159,13 @@ while getopts ":hr:u:p:b:s:g:e:" opt; do
 			;;
 	esac
 done
+
+if [ -z $region ]; then
+	echo "Region is required, e.g., us-east-1"
+	echo ""
+	usage
+fi
+
 
 # backup each instance
 for instance in $(echo $rds_instances | sed "s/,/ /g"); do 
