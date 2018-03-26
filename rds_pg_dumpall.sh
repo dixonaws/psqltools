@@ -160,12 +160,14 @@ while getopts ":hr:u:p:b:s:g:e:" opt; do
 	esac
 done
 
+# checking for mandatory arguments
 if [ -z $region ]; then
 	echo "Region is required, e.g., us-east-1"
 	echo ""
 	usage
 fi
 
+# todo, check for all mandatory arguments
 
 # backup each instance
 for instance in $(echo $rds_instances | sed "s/,/ /g"); do 
